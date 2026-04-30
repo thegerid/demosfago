@@ -38,6 +38,11 @@
       padding: 2px;
     }
 
+    body.loading .phone {
+      opacity: 0;
+      pointer-events: none;
+    }
+
     .phone {
       width: min(390px, 100vw);
       aspect-ratio: 430 / 932;
@@ -46,6 +51,7 @@
       background: var(--bg);
       overflow: hidden;
       position: relative;
+      transition: opacity 120ms ease;
     }
 
     .screen {
@@ -3599,7 +3605,7 @@
 
   </style>
 </head>
-<body>
+<body class="loading">
   <main class="phone" id="phone">
     <aside class="side-menu" id="sideMenu" aria-hidden="true">
       <div class="side-menu-panel" role="dialog" aria-modal="true" aria-label="Боковое меню">
@@ -3737,11 +3743,11 @@
           </svg>
         </button>
         <div class="tabs" id="tabs">
-          <button class="tab active" data-tab="active" type="button">Активная 1</button>
+          <button class="tab active" data-tab="active" type="button">Активные 2</button>
           <button class="tab" data-tab="agreed" type="button">Согласованные 0</button>
           <button class="tab" data-tab="finished" type="button">Завершенные 0</button>
-          <button class="tab" data-tab="assigned" type="button">Назначенные 1</button>
-          <button class="tab" data-tab="all" type="button">Все 1</button>
+          <button class="tab" data-tab="assigned" type="button">Назначенные 2</button>
+          <button class="tab" data-tab="all" type="button">Все 2</button>
         </div>
       </section>
 
@@ -5331,6 +5337,12 @@
           meetingsContainer.scrollTop = initialRouteState.scrollTop;
         });
       }
+    }
+
+    function revealScreenAfterInit() {
+      window.requestAnimationFrame(() => {
+        document.body.classList.remove("loading");
+      });
     }
 
     function renderNotificationsThemeState() {
@@ -8189,6 +8201,7 @@
     renderClientCardExpandedState();
     renderSigningAccordion();
     renderOnboardingPhotoState();
+    revealScreenAfterInit();
   </script>
 </body>
 </html>
