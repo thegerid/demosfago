@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <title>Перенос встречи</title>
+  <script src="../shared/meetings-store.js"></script>
+  <style>
+    :root {
+      --font-ui: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --bg: #eef2f7;
+      --text: #1f3048;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); font-family: var(--font-ui); }
+    body { display: grid; place-items: center; }
+
+    .phone {
+      position: relative;
+      width: 430px;
+      min-height: 932px;
+      background: #fff;
+      box-shadow: 0 0 0 1px rgba(25, 32, 43, 0.08);
+      overflow: hidden;
+      padding: 10px 14px 18px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 3px 10px rgba(19, 23, 31, 0.08);
+      color: #1d212b;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      cursor: pointer;
+      font: 700 18px/1 var(--font-ui);
+    }
+
+    .topbar-title {
+      min-width: 0;
+    }
+
+    .topbar-status {
+      margin: 0 0 2px;
+      color: #1f3048;
+      font: 700 14px/1.2 var(--font-ui);
+    }
+
+    .topbar-name {
+      margin: 0;
+      color: #8b92a0;
+      font: 500 13px/1.2 var(--font-ui);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .title {
+      margin: 0 0 22px;
+      color: var(--text);
+      font: 700 23px/1.15 var(--font-ui);
+      letter-spacing: -0.01em;
+    }
+
+    .description {
+      margin: 0 0 18px;
+      color: #667085;
+      font: 500 14px/1.55 var(--font-ui);
+    }
+
+    .field {
+      margin-bottom: 12px;
+    }
+
+    .field-box,
+    .field-btn,
+    .field-textarea {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      background: #f2f4f7;
+      color: #1f3048;
+      font-family: var(--font-ui);
+    }
+
+    .field-box,
+    .field-btn {
+      min-height: 50px;
+      padding: 10px 12px;
+    }
+
+    .field-label {
+      display: block;
+      color: #8b92a0;
+      font: 500 12px/1.2 var(--font-ui);
+      margin-bottom: 4px;
+      text-align: left;
+    }
+
+    .field-value {
+      color: #2d3240;
+      font: 500 14px/1.35 var(--font-ui);
+      text-align: left;
+    }
+
+    .field-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .clear-btn,
+    .close-btn {
+      width: 24px;
+      height: 24px;
+      border: 0;
+      border-radius: 50%;
+      background: #c8cdd7;
+      color: #fff;
+      font: 400 18px/1 var(--font-ui);
+      display: grid;
+      place-items: center;
+      padding: 0;
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    .select-btn {
+      cursor: pointer;
+    }
+
+    .select-btn.disabled {
+      color: #a5acba;
+      pointer-events: none;
+    }
+
+    .arrow {
+      flex: 0 0 auto;
+      color: #7f8593;
+      display: inline-grid;
+      place-items: center;
+      line-height: 0;
+    }
+
+    .field-textarea {
+      min-height: 52px;
+      resize: none;
+      padding: 14px 12px;
+      font: 500 14px/1.35 var(--font-ui);
+      color: #2d3240;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .submit {
+      width: 100%;
+      height: 52px;
+      border: 0;
+      border-radius: 14px;
+      background: #1f222b;
+      color: #fff;
+      font: 600 18px/1 var(--font-ui);
+      cursor: pointer;
+      margin-top: 22px;
+    }
+
+    .submit.disabled {
+      background: #eef0f4;
+      color: #a5acba;
+      pointer-events: none;
+    }
+
+    .dim {
+      position: absolute;
+      inset: 0;
+      background: rgba(18, 21, 29, 0.52);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 120ms ease;
+      z-index: 5;
+    }
+
+    .dim.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .sheet,
+    .calendar {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: min(390px, 100vw);
+      background: #fff;
+      border-radius: 14px 14px 0 0;
+      padding: 10px 14px 16px;
+      box-shadow: 0 -12px 34px rgba(16, 20, 30, 0.2);
+      transform: translate(-50%, 100%);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 160ms ease, opacity 160ms ease;
+      z-index: 6;
+    }
+
+    .sheet.open,
+    .calendar.open {
+      transform: translate(-50%, 0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .handle {
+      width: 46px;
+      height: 5px;
+      border-radius: 999px;
+      background: #d8dbe2;
+      margin: 0 auto 12px;
+    }
+
+    .sheet-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .sheet-title {
+      margin: 0;
+      color: #202636;
+      font: 700 18px/1.2 var(--font-ui);
+    }
+
+    .sheet-list {
+      display: grid;
+      gap: 10px;
+      padding-top: 6px;
+    }
+
+    .sheet-option {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: #2d3240;
+      font: 500 15px/1.35 var(--font-ui);
+      text-align: left;
+      padding: 8px 0;
+      cursor: pointer;
+    }
+
+    .calendar-headline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .calendar-title {
+      margin: 0;
+      color: #202636;
+      font: 700 18px/1.2 var(--font-ui);
+    }
+
+    .calendar-controls {
+      display: grid;
+      grid-template-columns: 1fr 124px;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .calendar-select {
+      height: 36px;
+      border: 0;
+      border-radius: 6px;
+      background: #eef0f4;
+      color: #202636;
+      font: 500 14px/1 var(--font-ui);
+      padding: 0 10px;
+    }
+
+    .calendar-weekdays,
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+
+    .calendar-weekdays {
+      margin-bottom: 10px;
+      color: #9aa3b2;
+      font: 500 12px/1.2 var(--font-ui);
+      text-align: center;
+    }
+
+    .calendar-day,
+    .calendar-empty {
+      min-height: 34px;
+      display: grid;
+      place-items: center;
+      font: 500 14px/1 var(--font-ui);
+    }
+
+    .calendar-day {
+      border: 0;
+      background: transparent;
+      color: #8d97a8;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+
+    .calendar-day.selected {
+      color: #1b66ff;
+      font-weight: 700;
+    }
+
+    .calendar-day.past {
+      color: #d3d8e0;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .calendar-footer {
+      margin-top: 18px;
+      width: 100%;
+      height: 48px;
+      border: 0;
+      border-radius: 14px;
+      background: #eef0f4;
+      color: #2d3240;
+      font: 600 15px/1 var(--font-ui);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <header class="topbar">
+      <button class="icon-btn" id="backBtn" type="button" aria-label="Назад">‹</button>
+      <div class="topbar-title">
+        <p class="topbar-status">Назначена</p>
+        <p class="topbar-name" id="meetingName">Клиент</p>
+      </div>
+      <button class="icon-btn" type="button" aria-label="Важно">!</button>
+    </header>
+
+    <h1 class="title">Перенос встречи</h1>
+    <p class="description">Согласуйте с клиентом и выберите адрес и дату переноса. Также выберите причину переноса, или опишите комментарием</p>
+
+    <div class="field">
+      <div class="field-box">
+        <label class="field-label" for="addressInput">Адрес</label>
+        <div class="field-row">
+          <input class="field-value" id="addressInput" type="text" style="border:0;background:transparent;padding:0;flex:1 1 auto;outline:none;">
+          <button class="clear-btn" id="clearAddressBtn" type="button" aria-label="Очистить адрес">×</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <button class="field-btn select-btn" id="dateBtn" type="button" aria-label="Выбрать дату">
+        <span>
+          <span class="field-label">Дата</span>
+          <span class="field-value" id="dateValue"></span>
+        </span>
+        <span class="arrow" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <rect x="3" y="4" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M6 2.8V5.2M12 2.8V5.2M3.7 7.3H14.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </span>
+      </button>
+    </div>
+
+    <div class="field hidden" id="reasonField">
+      <button class="field-btn select-btn" id="reasonBtn" type="button" aria-label="Выбрать причину">
+        <span>
+          <span class="field-value" id="reasonValue">Выберите причину</span>
+        </span>
+        <span class="arrow" aria-hidden="true">
+          <svg width="14" height="8" viewBox="0 0 14 8" fill="none">
+            <path d="M1 1.2 7 6.8 13 1.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      </button>
+    </div>
+
+    <div class="field hidden" id="timeField">
+      <button class="field-btn select-btn disabled" id="timeBtn" type="button" aria-label="Выбрать время">
+        <span>
+          <span class="field-value" id="timeValue">Время</span>
+        </span>
+        <span class="arrow" aria-hidden="true">
+          <svg width="14" height="8" viewBox="0 0 14 8" fill="none">
+            <path d="M1 1.2 7 6.8 13 1.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      </button>
+    </div>
+
+    <div class="field hidden" id="commentField">
+      <textarea class="field-textarea" id="commentInput" placeholder="Введите комментарий" aria-label="Введите комментарий"></textarea>
+    </div>
+
+    <button class="submit disabled" id="submitBtn" type="button">Завершить встречу</button>
+
+    <div class="dim" id="dim"></div>
+
+    <section class="calendar" id="calendar" aria-modal="true" role="dialog" aria-label="Календарь">
+      <div class="handle" aria-hidden="true"></div>
+      <div class="calendar-headline">
+        <h2 class="calendar-title">Календарь</h2>
+        <button class="close-btn" id="calendarCloseBtn" type="button" aria-label="Закрыть календарь">×</button>
+      </div>
+      <div class="calendar-controls">
+        <select class="calendar-select" id="monthSelect" aria-label="Месяц"></select>
+        <select class="calendar-select" id="yearSelect" aria-label="Год"></select>
+      </div>
+      <div class="calendar-weekdays">
+        <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+      <button class="calendar-footer" id="calendarCancelBtn" type="button">Отмена</button>
+    </section>
+
+    <section class="sheet" id="reasonSheet" aria-modal="true" role="dialog" aria-label="Выберите причину">
+      <div class="handle" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <h2 class="sheet-title">Выберите причину</h2>
+        <button class="close-btn" id="reasonCloseBtn" type="button" aria-label="Закрыть список причин">×</button>
+      </div>
+      <div class="sheet-list" id="reasonList"></div>
+    </section>
+
+    <section class="sheet" id="timeSheet" aria-modal="true" role="dialog" aria-label="Время">
+      <div class="handle" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <h2 class="sheet-title">Время</h2>
+        <button class="close-btn" id="timeCloseBtn" type="button" aria-label="Закрыть список времени">×</button>
+      </div>
+      <div class="sheet-list" id="timeList"></div>
+    </section>
+  </main>
+
+  <script>
+    const meetingsStore = window.DemoSfaGoMeetingsStore || null;
+    const params = new URLSearchParams(window.location.search);
+    const meetingId = params.get("id") || params.get("meetingId") || params.get("code") || "";
+    const fallbackMeeting = {
+      id: meetingId || "dc2404261326365",
+      code: params.get("code") || meetingId || "DC2404261326365",
+      name: params.get("name") || "Михайлов Демьян Сидорович",
+      time: params.get("time") || "20:00 — 21:00",
+      address: params.get("address") || "г Москва, Алтуфьевское шоссе, д 32",
+      metro: params.get("metro") || "метро Дегунино",
+      phone: params.get("phone") || "+79058490156"
+    };
+    const meeting = (meetingsStore && meetingId && meetingsStore.getById(meetingId)) || fallbackMeeting;
+
+    const reasonOptions = [
+      "Нет ДУЛ в день встречи",
+      "Отказ от ПЭП",
+      "По инициативе клиента",
+      "Клиент думает над предложением",
+      "СВК не успел на встречу",
+      "Нет карты в день доставки",
+      "Нет мобильной связи",
+      "Невозможно доехать до клиента"
+    ];
+
+    const timeOptions = [
+      "08:00 - 09:00",
+      "09:00 - 10:00",
+      "10:00 - 11:00",
+      "11:00 - 12:00",
+      "12:00 - 13:00",
+      "13:00 - 14:00",
+      "14:00 - 15:00",
+      "15:00 - 16:00",
+      "17:00 - 18:00",
+      "18:00 - 19:00",
+      "20:00 - 21:00",
+      "21:00 - 22:00"
+    ];
+
+    const monthNames = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+
+    const state = {
+      address: meeting.address || "",
+      date: null,
+      reason: "",
+      time: "",
+      comment: "",
+      month: 3,
+      year: 2026,
+      openSheet: ""
+    };
+
+    const backBtn = document.getElementById("backBtn");
+    const meetingName = document.getElementById("meetingName");
+    const addressInput = document.getElementById("addressInput");
+    const clearAddressBtn = document.getElementById("clearAddressBtn");
+    const dateBtn = document.getElementById("dateBtn");
+    const dateValue = document.getElementById("dateValue");
+    const reasonField = document.getElementById("reasonField");
+    const reasonBtn = document.getElementById("reasonBtn");
+    const reasonValue = document.getElementById("reasonValue");
+    const timeField = document.getElementById("timeField");
+    const timeBtn = document.getElementById("timeBtn");
+    const timeValue = document.getElementById("timeValue");
+    const commentField = document.getElementById("commentField");
+    const commentInput = document.getElementById("commentInput");
+    const submitBtn = document.getElementById("submitBtn");
+    const dim = document.getElementById("dim");
+    const calendar = document.getElementById("calendar");
+    const calendarCloseBtn = document.getElementById("calendarCloseBtn");
+    const calendarCancelBtn = document.getElementById("calendarCancelBtn");
+    const monthSelect = document.getElementById("monthSelect");
+    const yearSelect = document.getElementById("yearSelect");
+    const calendarGrid = document.getElementById("calendarGrid");
+    const reasonSheet = document.getElementById("reasonSheet");
+    const reasonCloseBtn = document.getElementById("reasonCloseBtn");
+    const reasonList = document.getElementById("reasonList");
+    const timeSheet = document.getElementById("timeSheet");
+    const timeCloseBtn = document.getElementById("timeCloseBtn");
+    const timeList = document.getElementById("timeList");
+
+    function goMeetings() {
+      window.location.href = new URL("../meetings/index.html", window.location.href).toString();
+    }
+
+    function formatDate(value) {
+      const day = String(value.getDate()).padStart(2, "0");
+      const month = String(value.getMonth() + 1).padStart(2, "0");
+      return `${day}.${month}.${value.getFullYear()}`;
+    }
+
+    function isSameDay(a, b) {
+      return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    }
+
+    function isFormReady() {
+      return Boolean(state.address.trim() && state.date && state.reason && state.time);
+    }
+
+    function closeSheets() {
+      state.openSheet = "";
+      dim.classList.remove("open");
+      calendar.classList.remove("open");
+      reasonSheet.classList.remove("open");
+      timeSheet.classList.remove("open");
+    }
+
+    function openSheet(name) {
+      state.openSheet = name;
+      dim.classList.add("open");
+      calendar.classList.toggle("open", name === "calendar");
+      reasonSheet.classList.toggle("open", name === "reason");
+      timeSheet.classList.toggle("open", name === "time");
+    }
+
+    function render() {
+      meetingName.textContent = meeting.name || "Клиент";
+      addressInput.value = state.address;
+      dateValue.textContent = state.date ? formatDate(state.date) : "";
+      reasonField.classList.toggle("hidden", !state.date);
+      timeField.classList.toggle("hidden", !state.date);
+      commentField.classList.toggle("hidden", !state.date);
+      reasonValue.textContent = state.reason || "Выберите причину";
+      timeValue.textContent = state.time || "Время";
+      const timeEnabled = Boolean(state.reason);
+      timeBtn.classList.toggle("disabled", !timeEnabled);
+      submitBtn.classList.toggle("disabled", !isFormReady());
+      renderCalendar();
+    }
+
+    function renderCalendar() {
+      if (!monthSelect.options.length) {
+        monthNames.forEach((name, index) => {
+          const option = document.createElement("option");
+          option.value = String(index);
+          option.textContent = name;
+          monthSelect.appendChild(option);
+        });
+      }
+      if (!yearSelect.options.length) {
+        [2026, 2027, 2028].forEach((year) => {
+          const option = document.createElement("option");
+          option.value = String(year);
+          option.textContent = String(year);
+          yearSelect.appendChild(option);
+        });
+      }
+      monthSelect.value = String(state.month);
+      yearSelect.value = String(state.year);
+      calendarGrid.innerHTML = "";
+
+      const firstDay = new Date(state.year, state.month, 1);
+      const startOffset = (firstDay.getDay() + 6) % 7;
+      const daysInMonth = new Date(state.year, state.month + 1, 0).getDate();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      for (let i = 0; i < startOffset; i += 1) {
+        const empty = document.createElement("div");
+        empty.className = "calendar-empty";
+        calendarGrid.appendChild(empty);
+      }
+
+      for (let day = 1; day <= daysInMonth; day += 1) {
+        const value = new Date(state.year, state.month, day);
+        value.setHours(0, 0, 0, 0);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "calendar-day";
+        button.textContent = String(day);
+        const isPast = value < today;
+        if (isPast) {
+          button.classList.add("past");
+        }
+        if (state.date && isSameDay(value, state.date)) {
+          button.classList.add("selected");
+        }
+        button.addEventListener("click", () => {
+          if (isPast) return;
+          state.date = value;
+          closeSheets();
+          render();
+        });
+        calendarGrid.appendChild(button);
+      }
+    }
+
+    reasonOptions.forEach((option) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "sheet-option";
+      button.textContent = option;
+      button.addEventListener("click", () => {
+        state.reason = option;
+        state.time = "";
+        closeSheets();
+        render();
+      });
+      reasonList.appendChild(button);
+    });
+
+    timeOptions.forEach((option) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "sheet-option";
+      button.textContent = option;
+      button.addEventListener("click", () => {
+        state.time = option;
+        closeSheets();
+        render();
+      });
+      timeList.appendChild(button);
+    });
+
+    backBtn.addEventListener("click", goMeetings);
+    clearAddressBtn.addEventListener("click", () => {
+      state.address = "";
+      render();
+      addressInput.focus();
+    });
+    addressInput.addEventListener("input", () => {
+      state.address = addressInput.value;
+      render();
+    });
+    dateBtn.addEventListener("click", () => openSheet("calendar"));
+    reasonBtn.addEventListener("click", () => openSheet("reason"));
+    timeBtn.addEventListener("click", () => {
+      if (!state.reason) return;
+      openSheet("time");
+    });
+    commentInput.addEventListener("input", () => {
+      state.comment = commentInput.value;
+    });
+    calendarCloseBtn.addEventListener("click", closeSheets);
+    calendarCancelBtn.addEventListener("click", closeSheets);
+    reasonCloseBtn.addEventListener("click", closeSheets);
+    timeCloseBtn.addEventListener("click", closeSheets);
+    dim.addEventListener("click", closeSheets);
+    monthSelect.addEventListener("change", () => {
+      state.month = Number(monthSelect.value);
+      renderCalendar();
+    });
+    yearSelect.addEventListener("change", () => {
+      state.year = Number(yearSelect.value);
+      renderCalendar();
+    });
+    submitBtn.addEventListener("click", () => {
+      if (!isFormReady()) return;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const selected = new Date(state.date);
+      selected.setHours(0, 0, 0, 0);
+      if (meetingsStore && meeting.id) {
+        const patch = {
+          address: state.address.trim(),
+          time: state.time,
+          rescheduled: !isSameDay(selected, today),
+          completed: false,
+          atClient: false,
+          departed: false,
+          agreed: false,
+          dismissed: false
+        };
+        meetingsStore.patch(meeting.id, patch);
+      }
+      goMeetings();
+    });
+
+    render();
+  </script>
+</body>
+</html>

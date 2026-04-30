@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <title>Demo SFA Go</title>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const flow = (params.get("flow") || "meetings").trim();
+    const targets = {
+      meetings: "./meetings/index.html",
+      "debit-card": "./debit-card/index.html",
+      acts: "./acts/index.html",
+      sms: "./sms/index.html",
+      "meeting-transfer": "./meeting-transfer/index.html"
+    };
+    location.replace(targets[flow] || targets.meetings);
+  </script>
+</head>
+<body>
+  <noscript>
+    <p><a href="./meetings/index.html">Открыть Demo SFA Go</a></p>
+  </noscript>
+</body>
+</html>

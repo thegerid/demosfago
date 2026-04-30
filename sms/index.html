@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <title>SMS</title>
+  <style>
+    :root {
+      --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Arial, sans-serif;
+      --bg: #f3f5f8;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: #eef2f7; font-family: var(--font-ui); }
+    body { display: grid; place-items: center; }
+
+    .phone {
+      position: relative;
+      width: min(390px, 100vw);
+      min-height: 844px;
+      background: #fff;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(25, 32, 43, 0.08);
+    }
+
+    .bg-screen {
+      position: absolute;
+      inset: 0;
+      background: var(--bg);
+      padding: 14px 12px 18px;
+      overflow: hidden;
+    }
+
+    .bg-topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .bg-menu-btn,
+    .bg-icon-btn {
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 10px;
+      background: #eceef2;
+      color: #20242c;
+      display: grid;
+      place-items: center;
+      font: 700 18px/1 var(--font-ui);
+    }
+
+    .bg-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .bg-search {
+      height: 44px;
+      border-radius: 12px;
+      background: #eceef2;
+      color: #8a909b;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 14px;
+      font: 500 13px/1 var(--font-ui);
+      margin-bottom: 12px;
+    }
+
+    .bg-filters {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .bg-edit-btn {
+      width: 30px;
+      height: 30px;
+      border: 0;
+      border-radius: 8px;
+      background: #eceef2;
+      color: #20242c;
+      font: 700 14px/1 var(--font-ui);
+    }
+
+    .bg-tabs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .bg-tab {
+      height: 30px;
+      border-radius: 9px;
+      padding: 0 12px;
+      display: inline-flex;
+      align-items: center;
+      background: #e7e9ee;
+      color: #333947;
+      font: 500 12px/1 var(--font-ui);
+    }
+
+    .bg-tab.active {
+      background: #1f2026;
+      color: #fff;
+    }
+
+    .bg-card {
+      border-radius: 4px;
+      background: #fff;
+      border: 1px solid #ececf1;
+      box-shadow: 0 10px 24px rgba(20, 24, 33, 0.08);
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .bg-badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .bg-badge {
+      height: 20px;
+      border-radius: 6px;
+      padding: 0 8px;
+      display: inline-flex;
+      align-items: center;
+      font: 700 10px/1 var(--font-ui);
+    }
+
+    .bg-badge.violet { background: #ede7ff; color: #5a49b5; }
+    .bg-badge.green { background: #dff5e7; color: #23784a; }
+    .bg-badge.lime { background: #dff4de; color: #2a7f38; }
+    .bg-badge.red { background: #f7dede; color: #b63c3c; }
+    .bg-badge.gray { background: #ececf5; color: #6c7190; }
+    .bg-badge.orange { background: #f9ebd7; color: #b06d18; }
+
+    .bg-title {
+      margin: 0 0 14px;
+      color: #1f3048;
+      font: 700 16px/1.2 var(--font-ui);
+    }
+
+    .bg-meta-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 12px;
+      color: #2f3440;
+      font: 500 13px/1.25 var(--font-ui);
+    }
+
+    .bg-meta-muted {
+      color: #8a909b;
+      margin-top: 3px;
+    }
+
+    .bg-actions-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .bg-chip {
+      min-width: 74px;
+      height: 34px;
+      border-radius: 10px;
+      border: 1.5px solid #6f7683;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      color: #20242c;
+      font: 600 13px/1 var(--font-ui);
+    }
+
+    .bg-chip.dark {
+      background: #1f222b;
+      border-color: #1f222b;
+      color: #fff;
+    }
+
+    .backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(18, 21, 29, 0.52);
+    }
+
+    .toast {
+      position: absolute;
+      top: 78px;
+      left: 12px;
+      right: 12px;
+      min-height: 62px;
+      border-radius: 15px;
+      background: #202127;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 14px 14px 12px;
+      box-shadow: 0 18px 30px rgba(14, 17, 24, 0.3);
+      opacity: 0;
+      transform: translateY(-10px);
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+      z-index: 3;
+    }
+
+    .toast.open {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .toast-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #20bf55;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .toast-text {
+      flex: 1 1 auto;
+      font: 700 13px/1.35 var(--font-ui);
+    }
+
+    .toast-close {
+      width: 38px;
+      height: 24px;
+      border: 0;
+      border-left: 1px solid rgba(255, 255, 255, 0.14);
+      background: transparent;
+      color: rgba(255,255,255,.92);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      padding: 0 0 0 14px;
+      font: 400 24px/1 var(--font-ui);
+    }
+
+    .sheet,
+    .template-sheet {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: min(390px, 100vw);
+      background: #fff;
+      border-radius: 18px 18px 0 0;
+      padding: 10px 16px 18px;
+      transform: translate(-50%, 0);
+      box-shadow: 0 -10px 26px rgba(16, 20, 30, 0.16);
+    }
+
+    .template-sheet {
+      z-index: 4;
+      transform: translate(-50%, 100%);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 160ms ease, opacity 160ms ease;
+    }
+
+    .template-sheet.open {
+      transform: translate(-50%, 0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .handle {
+      width: 34px;
+      height: 4px;
+      border-radius: 999px;
+      background: #e6e7eb;
+      margin: 0 auto 16px;
+    }
+
+    .head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .title {
+      margin: 0;
+      color: #2b2c31;
+      font: 700 17px/1.2 var(--font-ui);
+    }
+
+    .close {
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 50%;
+      background: #f1f2f5;
+      color: #9ca1ad;
+      font: 400 28px/1 var(--font-ui);
+      display: grid;
+      place-items: center;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .subtitle {
+      margin: 0 0 16px;
+      color: #8d919b;
+      font: 500 13px/1.38 var(--font-ui);
+    }
+
+    .select-btn {
+      width: 100%;
+      min-height: 48px;
+      border: 1.5px solid #b8bcc6;
+      border-radius: 11px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 7px 14px 8px;
+      cursor: pointer;
+      text-align: left;
+      margin-bottom: 16px;
+    }
+
+    .select-text {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+
+    .select-label {
+      color: #8d919b;
+      font: 500 12px/1.15 var(--font-ui);
+    }
+
+    .select-value {
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #2d3139;
+      font: 500 13px/1.25 var(--font-ui);
+    }
+
+    .select-btn.is-empty .select-label {
+      display: none;
+    }
+
+    .select-btn.is-empty .select-text {
+      gap: 0;
+    }
+
+    .select-btn.is-empty .select-value {
+      color: #8d919b;
+      font: 500 14px/1.2 var(--font-ui);
+    }
+
+    .btn {
+      width: 100%;
+      height: 48px;
+      border-radius: 14px;
+      border: 0;
+      font: 600 15px/1 var(--font-ui);
+      cursor: pointer;
+    }
+
+    .btn + .btn { margin-top: 14px; }
+    .btn-primary { background: #1f222b; color: #fff; }
+    .btn-primary.disabled { background: #eef0f4; color: #a5acba; pointer-events: none; }
+    .btn-secondary { background: #eef0f4; color: #2d3240; }
+
+    .template-list {
+      display: grid;
+      gap: 0;
+      padding-top: 6px;
+    }
+
+    .template-option {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      text-align: left;
+      color: #2d3240;
+      font: 500 14px/1.35 var(--font-ui);
+      padding: 14px 0;
+      border-bottom: 1px solid #eceef2;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone">
+    <div class="bg-screen" aria-hidden="true">
+      <div class="bg-topbar">
+        <button class="bg-menu-btn" type="button">≡</button>
+        <div class="bg-actions">
+          <button class="bg-icon-btn" type="button">•</button>
+          <button class="bg-icon-btn" type="button">◔</button>
+          <button class="bg-icon-btn" type="button">⌕</button>
+          <button class="bg-icon-btn" type="button">◌</button>
+        </div>
+      </div>
+      <div class="bg-search">Поиск по номеру или имени, или адресу</div>
+      <div class="bg-filters">
+        <button class="bg-edit-btn" type="button">✎</button>
+        <div class="bg-tabs">
+          <div class="bg-tab active">Активные 2</div>
+          <div class="bg-tab">Согласованные</div>
+          <div class="bg-tab">Завершенные 2</div>
+        </div>
+      </div>
+      <div class="bg-card">
+        <div class="bg-badges">
+          <span class="bg-badge violet">DC</span>
+          <span class="bg-badge green">У КЛИЕНТА</span>
+          <span class="bg-badge lime">НОВЫЙ</span>
+          <span class="bg-badge red">ПОВТОРНАЯ</span>
+          <span class="bg-badge gray">НЕРЕЗИДЕНТ</span>
+          <span class="bg-badge orange">PLU</span>
+        </div>
+        <p class="bg-title">Михайлов Демьян Сидорович</p>
+        <div class="bg-meta-row">
+          <span>●</span>
+          <span>11:00 — 12:00</span>
+        </div>
+        <div class="bg-meta-row">
+          <span>➤</span>
+          <div>
+            <div>г Москва, Алтуфьевское шоссе, д 32</div>
+            <div class="bg-meta-muted">метро Дегунино</div>
+          </div>
+        </div>
+        <div class="bg-actions-row">
+          <div class="bg-chip dark">Позвонить</div>
+          <div class="bg-chip">SMS</div>
+          <div class="bg-chip">Заметка</div>
+        </div>
+      </div>
+      <div class="bg-card">
+        <div class="bg-badges">
+          <span class="bg-badge violet">DC</span>
+          <span class="bg-badge green">НАЗНАЧЕНА</span>
+          <span class="bg-badge lime">НОВЫЙ</span>
+          <span class="bg-badge red">ТО</span>
+        </div>
+        <p class="bg-title">Романов Артем Викторович</p>
+        <div class="bg-meta-row">
+          <span>●</span>
+          <span>20:00 — 21:00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="backdrop"></div>
+
+    <div class="toast" id="toast" aria-live="polite" aria-atomic="true">
+      <div class="toast-icon" aria-hidden="true">✓</div>
+      <div class="toast-text">Запрос успешно отправлен.</div>
+      <button class="toast-close" id="toastClose" type="button" aria-label="Закрыть уведомление">×</button>
+    </div>
+
+    <section class="sheet" aria-modal="true" role="dialog" aria-label="SMS">
+      <div class="handle" aria-hidden="true"></div>
+      <div class="head">
+        <h1 class="title">SMS</h1>
+        <button class="close" id="sheetClose" type="button" aria-label="Закрыть окно SMS">×</button>
+      </div>
+      <p class="subtitle">Выберите шаблон SMS для отправки клиенту</p>
+      <button class="select-btn is-empty" id="templateBtn" type="button" aria-label="Шаблон SMS">
+        <span class="select-text">
+          <span class="select-label">Шаблон SMS</span>
+          <span class="select-value" id="templateValue">Шаблон SMS</span>
+        </span>
+        <svg width="14" height="8" viewBox="0 0 14 8" fill="none" aria-hidden="true">
+          <path d="M1 1.2 7 6.8 13 1.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="btn btn-primary disabled" id="sendBtn" type="button">Отправить</button>
+      <button class="btn btn-secondary" id="backBtn" type="button">Вернуться</button>
+    </section>
+
+    <section class="template-sheet" id="templateSheet" aria-modal="true" role="dialog" aria-label="Шаблон SMS">
+      <div class="handle" aria-hidden="true"></div>
+      <div class="head">
+        <h2 class="title">Шаблон SMS</h2>
+        <button class="close" id="templateClose" type="button" aria-label="Закрыть список шаблонов">×</button>
+      </div>
+      <div class="template-list" id="templateList"></div>
+    </section>
+  </main>
+
+  <script>
+    const templates = [
+      "До вас не дозвониться, перезвоните",
+      "Немного опаздываю",
+      "Выезжаю к вам"
+    ];
+
+    const templateBtn = document.getElementById("templateBtn");
+    const templateValue = document.getElementById("templateValue");
+    const templateSheet = document.getElementById("templateSheet");
+    const templateList = document.getElementById("templateList");
+    const templateClose = document.getElementById("templateClose");
+    const sendBtn = document.getElementById("sendBtn");
+    const backBtn = document.getElementById("backBtn");
+    const sheetClose = document.getElementById("sheetClose");
+    const toast = document.getElementById("toast");
+    const toastClose = document.getElementById("toastClose");
+
+    let selectedTemplate = "";
+
+    function goMeetings() {
+      window.location.href = new URL("../meetings/index.html", window.location.href).toString();
+    }
+
+    function renderState() {
+      const hasTemplate = Boolean(selectedTemplate);
+      templateValue.textContent = selectedTemplate || "Шаблон SMS";
+      templateBtn.classList.toggle("is-empty", !hasTemplate);
+      sendBtn.classList.toggle("disabled", !hasTemplate);
+    }
+
+    function openTemplateSheet() {
+      templateSheet.classList.add("open");
+    }
+
+    function closeTemplateSheet() {
+      templateSheet.classList.remove("open");
+    }
+
+    function showToast() {
+      toast.classList.add("open");
+    }
+
+    function hideToast() {
+      toast.classList.remove("open");
+    }
+
+    templateList.innerHTML = "";
+    templates.forEach((item) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "template-option";
+      button.textContent = item;
+      button.addEventListener("click", () => {
+        selectedTemplate = item;
+        renderState();
+        closeTemplateSheet();
+      });
+      templateList.appendChild(button);
+    });
+
+    templateBtn.addEventListener("click", openTemplateSheet);
+    templateClose.addEventListener("click", closeTemplateSheet);
+    sendBtn.addEventListener("click", () => {
+      if (!selectedTemplate) return;
+      showToast();
+    });
+    toastClose.addEventListener("click", hideToast);
+    backBtn.addEventListener("click", goMeetings);
+    sheetClose.addEventListener("click", goMeetings);
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && templateSheet.classList.contains("open")) {
+        closeTemplateSheet();
+      }
+    });
+
+    renderState();
+  </script>
+</body>
+</html>

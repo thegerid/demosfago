@@ -1,0 +1,1911 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <title>Demo SFA Go - Акты</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #fff;
+      --line: #e4e7ee;
+      --text: #1e3048;
+      --muted: #7e8797;
+      --dark: #23252d;
+      --soft: #f3f5f8;
+      --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 2px;
+      background: linear-gradient(180deg, #f7f8fa 0%, #f0f1f4 100%);
+      color: var(--text);
+      font: 500 16px/1.35 var(--font-ui);
+    }
+
+    input, button, textarea, select {
+      font: inherit;
+      font-family: var(--font-ui);
+    }
+
+    .phone {
+      position: relative;
+      width: min(390px, 100vw);
+      height: min(100dvh, 846px);
+      background: var(--bg);
+      border: 1px solid #d6dae2;
+      overflow: hidden;
+    }
+
+    #app {
+      height: 100%;
+    }
+
+    .screen {
+      min-height: 100%;
+      height: 100%;
+      padding: 10px 10px 18px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      background: rgba(18, 21, 29, 0.18);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 140ms ease;
+    }
+
+    .overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .phone.menu-open .screen {
+      overflow: hidden;
+    }
+
+    .side-menu {
+      position: absolute;
+      inset: 0;
+      z-index: 40;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 160ms ease;
+    }
+
+    .side-menu.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .side-menu-panel {
+      width: min(384px, calc(100% - 6px));
+      height: 100%;
+      background: #fff;
+      padding: 12px 10px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(-100%);
+      transition: transform 180ms ease;
+    }
+
+    .side-menu.open .side-menu-panel {
+      transform: translateX(0);
+    }
+
+    .side-menu-head {
+      display: grid;
+      grid-template-columns: 34px 1fr 34px;
+      align-items: center;
+      gap: 10px;
+      padding: 2px 2px 10px;
+      flex: 0 0 auto;
+    }
+
+    .side-menu-icon-btn {
+      width: 34px;
+      height: 34px;
+      border: 0;
+      background: transparent;
+      color: #23252d;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .side-menu-logo {
+      justify-self: center;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+      color: #23252d;
+      font: 700 18px/1 var(--font-ui);
+    }
+
+    .side-menu-logo-sfa {
+      color: #f44c42;
+      font-style: italic;
+    }
+
+    .side-menu-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 2px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .side-menu-body::-webkit-scrollbar,
+    .chip-row::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+    }
+
+    .side-menu-card,
+    .side-menu-footer {
+      background: var(--soft);
+      border-radius: 14px;
+    }
+
+    .side-menu-card {
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .side-menu-nav-btn,
+    .side-menu-simple-btn {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: #434955;
+      text-align: left;
+      cursor: pointer;
+      font: 600 15px/1.2 var(--font-ui);
+    }
+
+    .side-menu-nav-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px;
+    }
+
+    .side-menu-arrow {
+      color: #7f8794;
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    .side-menu-simple-btn {
+      display: block;
+      padding: 18px 22px;
+    }
+
+    .side-menu-promo {
+      padding: 14px 14px 16px;
+    }
+
+    .side-menu-promo-head {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .side-menu-promo-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      box-shadow: 0 6px 14px rgba(24, 39, 60, 0.08);
+    }
+
+    .side-menu-promo-title {
+      margin: 0 0 3px;
+      color: #2f333c;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.15;
+    }
+
+    .side-menu-promo-sub {
+      margin: 0;
+      color: #707887;
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+    .side-menu-promo-btn {
+      width: 100%;
+      height: 36px;
+      border: 0;
+      border-radius: 11px;
+      background: var(--dark);
+      color: #fff;
+      cursor: pointer;
+      font: 600 14px/1 var(--font-ui);
+    }
+
+    .side-menu-footer {
+      flex: 0 0 auto;
+      padding: 14px 12px 15px;
+      margin-top: 2px;
+      text-align: center;
+      color: #707887;
+    }
+
+    .side-menu-footer strong {
+      display: block;
+      color: #4c5260;
+      font-size: 15px;
+      line-height: 1.2;
+      margin-bottom: 2px;
+    }
+
+    .side-menu-footer span {
+      display: block;
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .icon-btn,
+    .back-btn {
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 8px;
+      background: #fff;
+      color: #1d212b;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      padding: 0;
+      box-shadow: 0 3px 10px rgba(19, 23, 31, 0.08);
+      flex: 0 0 auto;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .tab-btn {
+      padding: 10px 16px;
+      border: 1px solid #d5d8df;
+      border-radius: 999px;
+      background: #fff;
+      color: #23252d;
+      cursor: pointer;
+      white-space: nowrap;
+      font: 500 15px/1 var(--font-ui);
+    }
+
+    .tab-btn.active {
+      border-color: var(--dark);
+      background: var(--dark);
+      color: #fff;
+    }
+
+    .chip-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      margin-bottom: 12px;
+      padding-bottom: 2px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .filter-chip {
+      padding: 8px 14px;
+      border: 1px solid #d5d8df;
+      border-radius: 999px;
+      background: #fff;
+      color: #313745;
+      cursor: pointer;
+      white-space: nowrap;
+      font: 500 14px/1 var(--font-ui);
+    }
+
+    .filter-chip.active {
+      border-color: var(--dark);
+      background: var(--dark);
+      color: #fff;
+    }
+
+    .scan-trigger {
+      width: 100%;
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding: 16px 18px;
+      border: 0;
+      border-radius: 12px;
+      background: #f1f2f4;
+      color: #151820;
+      cursor: pointer;
+      font: 500 15px/1.2 var(--font-ui);
+      text-align: center;
+    }
+
+    .scan-trigger svg,
+    .search-field svg {
+      flex: 0 0 auto;
+    }
+
+    .scan-trigger svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .scan-trigger span {
+      display: block;
+      flex: 0 1 auto;
+    }
+
+    .acts-stack,
+    .inventory-list,
+    .inventory-actions,
+    .act-card-controls,
+    .act-entry-list,
+    .scanner-home-actions {
+      display: grid;
+      gap: 10px;
+    }
+
+    .inventory-actions {
+      margin-top: 14px;
+    }
+
+    .act-card {
+      padding: 14px 14px 16px;
+      border: 1px solid #eceef3;
+      border-radius: 4px;
+      background: #fff;
+      box-shadow: 0 10px 24px rgba(20, 24, 33, 0.08);
+    }
+
+    .badge-row,
+    .inventory-head,
+    .act-entry-top,
+    .inventory-name-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge-row {
+      margin-bottom: 12px;
+    }
+
+    .badge,
+    .mini-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      font-weight: 700;
+    }
+
+    .badge {
+      padding: 3px 8px;
+      border-radius: 7px;
+      font-size: 11px;
+      line-height: 1;
+    }
+
+    .mini-badge {
+      min-width: 24px;
+      height: 20px;
+      padding: 0 7px;
+      border-radius: 6px;
+      font-size: 10px;
+      line-height: 1;
+    }
+
+    .badge-kind-cards,
+    .mini-badge-cc {
+      background: #fff1df;
+      color: #ff8b1f;
+    }
+
+    .badge-kind-documents {
+      background: #daf7fb;
+      color: #0a8da4;
+    }
+
+    .mini-badge-dc {
+      background: #efe7ff;
+      color: #7f6ce8;
+    }
+
+    .mini-badge-work {
+      background: #dce8ff;
+      color: #2e73ff;
+    }
+
+    .badge-status-wait-spd {
+      background: #dff6e7;
+      color: #17a257;
+    }
+
+    .badge-status-destroy {
+      background: #ffe3dc;
+      color: #d56548;
+    }
+
+    .badge-status-shortage {
+      background: #efe2ff;
+      color: #8c58ca;
+    }
+
+    .badge-status-wait-svk {
+      background: #dff3ff;
+      color: #1988d8;
+    }
+
+    .badge-status-completed {
+      background: #eceef2;
+      color: #70798a;
+    }
+
+    .item-row {
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .item-icon {
+      width: 46px;
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #111318;
+      flex: 0 0 auto;
+    }
+
+    .item-title {
+      margin: 0 0 3px;
+      color: #111318;
+      font-size: 15px;
+      line-height: 1.2;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .item-sub {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      color: #7d8595;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .item-sub svg,
+    .inventory-info svg {
+      width: 17px;
+      height: 17px;
+      color: #8f95a3;
+      flex: 0 0 auto;
+    }
+
+    .outline-btn,
+    .soft-action-btn,
+    .primary-btn,
+    .secondary-btn {
+      width: 100%;
+      min-height: 48px;
+      border-radius: 16px;
+      cursor: pointer;
+    }
+
+    .outline-btn {
+      border: 1.5px solid #20222a;
+      background: #fff;
+      color: #13161d;
+      font: 500 15px/1.2 var(--font-ui);
+    }
+
+    .act-entry-card,
+    .inventory-item {
+      border: 1px solid #dfe3eb;
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    .act-entry-card {
+      padding: 12px 14px;
+      background: #fafbfc;
+    }
+
+    .act-entry-name,
+    .act-entry-number,
+    .inventory-name,
+    .inventory-number {
+      color: #141923;
+      font-size: 15px;
+      line-height: 1.2;
+      font-weight: 500;
+    }
+
+    .act-entry-copy,
+    .inventory-sub {
+      margin: 0;
+      color: #8a91a1;
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+    .inventory-item {
+      display: grid;
+      grid-template-columns: 26px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+      padding: 12px 12px 14px;
+    }
+
+    .inventory-check {
+      padding-top: 2px;
+    }
+
+    .inventory-check input,
+    .select-row input {
+      width: 22px;
+      height: 22px;
+      margin: 0;
+      accent-color: var(--dark);
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    .search-field {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      align-items: center;
+      gap: 12px;
+      min-height: 46px;
+      margin-bottom: 12px;
+      padding: 0 14px;
+      border-radius: 12px;
+      background: #f3f4f7;
+    }
+
+    .search-field input {
+      width: 100%;
+      border: 0;
+      padding: 0;
+      outline: none;
+      background: transparent;
+      color: #222733;
+      font: 500 15px/1.2 var(--font-ui);
+    }
+
+    .search-field input::placeholder {
+      color: #8e94a2;
+    }
+
+    .select-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      color: #262c38;
+      font-size: 15px;
+    }
+
+    .inventory-empty {
+      padding: 18px 14px;
+      border: 1px dashed #d7dbe4;
+      border-radius: 12px;
+      background: #fafbfc;
+      color: #8891a1;
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .soft-action-btn {
+      border: 0;
+      background: #eef0f4;
+      color: #9ca3b3;
+      cursor: default;
+      font: 500 15px/1.2 var(--font-ui);
+    }
+
+    .soft-action-btn.enabled {
+      background: var(--dark);
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .completed-link {
+      width: 100%;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 12px;
+      border: 0;
+      border-radius: 16px;
+      background: #eff1f4;
+      color: #222733;
+      padding: 0 16px;
+      cursor: pointer;
+      text-align: center;
+      font: 600 15px/1.2 var(--font-ui);
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .header-row h2,
+    .scanner-home-head h1 {
+      margin: 0;
+      color: #111318;
+      font-size: 19px;
+      line-height: 1.15;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .page-title {
+      margin: 0 0 10px;
+      color: #111318;
+      font-size: 24px;
+      line-height: 1.15;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+    }
+
+    .page-copy {
+      max-width: 310px;
+      margin: 0 0 14px;
+      color: #798396;
+      line-height: 1.55;
+    }
+
+    .scanner-screen {
+      min-height: 100%;
+      height: 100%;
+      background:
+        radial-gradient(circle at 75% 25%, rgba(70, 72, 84, 0.08), transparent 28%),
+        linear-gradient(180deg, #17181c 0%, #090a0c 100%);
+      color: #fff;
+    }
+
+    .scanner-screen .screen {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      height: 100%;
+      padding: 22px 18px calc(132px + env(safe-area-inset-bottom));
+      overflow: hidden;
+    }
+
+    .scanner-close,
+    .scanner-sheet-close {
+      padding: 0;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .scanner-close {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.92);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .scanner-stage {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    .scanner-bottom {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 0 18px calc(18px + env(safe-area-inset-bottom));
+    }
+
+    .scanner-actions {
+      width: 100%;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .scanner-icon-btn {
+      width: 42px;
+      height: 40px;
+      padding: 0;
+      border: 0;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.14);
+      color: rgba(255, 255, 255, 0.88);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .scanner-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .scanner-mode {
+      width: 15px;
+      height: 10px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .capture-btn {
+      width: 56px;
+      height: 56px;
+      padding: 0;
+      border: 4px solid rgba(255, 255, 255, 0.96);
+      border-radius: 50%;
+      background: transparent;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .capture-btn::after {
+      content: "";
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.96);
+      display: block;
+    }
+
+    .scanner-home-indicator {
+      width: 120px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.96);
+    }
+
+    .scanner-sheet {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2;
+      padding: 6px 16px calc(18px + env(safe-area-inset-bottom));
+      border-radius: 18px 18px 0 0;
+      background: #fff;
+      color: #2c2f36;
+      box-shadow: 0 -16px 28px rgba(10, 11, 15, 0.28);
+    }
+
+    .scanner-sheet-handle {
+      width: 42px;
+      height: 4px;
+      margin: 0 auto 10px;
+      border-radius: 999px;
+      background: #e6e8ee;
+    }
+
+    .scanner-sheet-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .scanner-sheet-head h2 {
+      margin: 0;
+      color: #2f3138;
+      font-size: 17px;
+      line-height: 1.2;
+      font-weight: 600;
+    }
+
+    .scanner-sheet-head p {
+      margin: 12px 0 0;
+      color: #4d5058;
+      font-size: 14px;
+      line-height: 1.4;
+      font-weight: 500;
+    }
+
+    .scanner-sheet-close {
+      width: 32px;
+      height: 32px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: #f0f1f4;
+      color: #8b9099;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 4px;
+    }
+
+    .scanner-sheet-input {
+      width: 100%;
+      height: 44px;
+      padding: 0 14px;
+      border: 0;
+      border-radius: 12px;
+      outline: none;
+      background: #f4f5f8;
+      color: #2a2d34;
+      font: 500 16px/1 var(--font-ui);
+    }
+
+    .scanner-sheet-input::placeholder {
+      color: #8d919b;
+    }
+
+    .scanner-sheet-submit {
+      width: 100%;
+      height: 50px;
+      margin-top: 14px;
+      border: 0;
+      border-radius: 14px;
+      background: var(--dark);
+      color: #fff;
+      cursor: pointer;
+      font: 600 17px/1 var(--font-ui);
+    }
+
+    .scanner-sheet-submit:disabled {
+      background: #eceef2;
+      color: #a6abb4;
+      cursor: default;
+    }
+
+    .scanner-home-screen {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: var(--surface);
+    }
+
+    .scanner-home-head {
+      min-height: 30px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .primary-btn {
+      border: 0;
+      background: var(--dark);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .secondary-btn {
+      border: 1.5px solid #1e2026;
+      background: #fff;
+      color: #101318;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="phone" id="phone">
+    <div id="app"></div>
+
+    <aside class="side-menu" id="sideMenu" aria-hidden="true">
+      <div class="side-menu-panel" role="dialog" aria-modal="true" aria-label="Боковое меню">
+        <div class="side-menu-head">
+          <button class="side-menu-icon-btn" id="menuCloseBtn" type="button" aria-label="Закрыть меню">×</button>
+          <div class="side-menu-logo" aria-hidden="true">
+            <span class="side-menu-logo-sfa">SFA</span>
+            <span>go</span>
+          </div>
+          <button class="side-menu-icon-btn" type="button" aria-label="Настройки">
+            <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M8.77 1.93c.48-1.04 1.98-1.04 2.46 0l.45.97c.21.45.69.7 1.17.61l1.05-.18c1.12-.2 2.03.7 1.83 1.82l-.19 1.05c-.08.49.16.96.61 1.17l.97.45c1.04.48 1.04 1.98 0 2.46l-.97.45c-.45.21-.69.69-.61 1.17l.19 1.05c.2 1.12-.71 2.03-1.83 1.83l-1.05-.19a1.06 1.06 0 0 0-1.17.61l-.45.97c-.48 1.04-1.98 1.04-2.46 0l-.45-.97a1.06 1.06 0 0 0-1.17-.61l-1.05.19c-1.12.2-2.03-.71-1.83-1.83l.19-1.05a1.06 1.06 0 0 0-.61-1.17l-.97-.45c-1.04-.48-1.04-1.98 0-2.46l.97-.45c.45-.21.69-.68.61-1.17l-.19-1.05c-.2-1.12.71-2.02 1.83-1.82l1.05.18c.49.09.96-.16 1.17-.61l.45-.97ZM10 13.15A3.15 3.15 0 1 0 10 6.85a3.15 3.15 0 0 0 0 6.3Z" fill="currentColor"/>
+              <circle cx="17.2" cy="4.2" r="2.2" fill="#ff4d4f" stroke="#fff" stroke-width="1"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="side-menu-body">
+          <div class="side-menu-card">
+            <button class="side-menu-nav-btn" type="button" data-menu-action="meetings">
+              <span>Встречи</span>
+              <span class="side-menu-arrow" aria-hidden="true">›</span>
+            </button>
+            <button class="side-menu-nav-btn" type="button" data-menu-action="acts">
+              <span>Акты</span>
+              <span class="side-menu-arrow" aria-hidden="true">›</span>
+            </button>
+            <button class="side-menu-nav-btn" type="button">
+              <span>Кросс-продажи</span>
+              <span class="side-menu-arrow" aria-hidden="true">›</span>
+            </button>
+            <button class="side-menu-nav-btn" type="button">
+              <span>Мотивация</span>
+              <span class="side-menu-arrow" aria-hidden="true">›</span>
+            </button>
+            <button class="side-menu-nav-btn" type="button">
+              <span>Рекомендации</span>
+              <span class="side-menu-arrow" aria-hidden="true">›</span>
+            </button>
+            <button class="side-menu-nav-btn" type="button">
+              <span>Уведомления</span>
+              <span class="side-menu-arrow" aria-hidden="true">›</span>
+            </button>
+          </div>
+
+          <div class="side-menu-card side-menu-promo">
+            <div class="side-menu-promo-head">
+              <div class="side-menu-promo-icon" aria-hidden="true">🍊</div>
+              <div>
+                <p class="side-menu-promo-title">Предложите Апельсин</p>
+                <p class="side-menu-promo-sub">Друзьям или родственникам клиента</p>
+              </div>
+            </div>
+            <button class="side-menu-promo-btn" type="button">QR-код с заявкой</button>
+          </div>
+
+          <div class="side-menu-card">
+            <button class="side-menu-simple-btn" type="button">Выдать без заявки</button>
+            <button class="side-menu-simple-btn" type="button">Сканировать карты</button>
+            <button class="side-menu-simple-btn" type="button">Сканировать QR-код</button>
+            <button class="side-menu-simple-btn" type="button">Проверка внешнего вида</button>
+          </div>
+
+          <div class="side-menu-card side-menu-promo">
+            <div class="side-menu-promo-head">
+              <div class="side-menu-promo-icon" aria-hidden="true">🚀</div>
+              <div>
+                <p class="side-menu-promo-title">Удобнее в приложении!</p>
+                <p class="side-menu-promo-sub">Офлайн режим, меньше трафика</p>
+              </div>
+            </div>
+            <button class="side-menu-promo-btn" type="button">Установить</button>
+          </div>
+        </div>
+
+        <div class="side-menu-footer">
+          <strong>Выйти из аккаунта</strong>
+          <span>До конца сессии: 5 дней</span>
+        </div>
+      </div>
+    </aside>
+
+    <div class="overlay" id="overlay"></div>
+  </div>
+
+  <script>
+    const initialActs = [
+      { id: "act-card-1", kind: "cards", status: "wait-spd", date: "16.04.2026", title: "Чек-поинт Батайск", expanded: false, entries: [{ id: "act-card-1-entry-1", number: "7028", badge: "dc", product: "NH-PUL MIR AlfaCard Dual Daily" }] },
+      { id: "act-card-2", kind: "cards", status: "destroy", date: "16.04.2026", title: "ЛЦ Снабжение ЧП/МП", expanded: false, entries: [{ id: "act-card-2-entry-1", number: "6140", badge: "cc", product: "R7-MIR Classic Instant CR" }] },
+      { id: "act-card-3", kind: "cards", status: "shortage", date: "16.04.2026", title: "Чек-поинт Батайск", expanded: false, entries: [{ id: "act-card-3-entry-1", number: "5893", badge: "dc", product: "LG-PUL MIR Kids DB" }] },
+      { id: "act-card-4", kind: "cards", status: "wait-svk", date: "16.04.2026", title: "Чек-поинт Батайск", expanded: false, entries: [{ id: "act-card-4-entry-1", number: "7181", badge: "cc", product: "R7-MIR Classic Instant CR" }] },
+      { id: "act-doc-1", kind: "documents", status: "wait-spd", date: "22.07.2025", title: "Чек-поинт Батайск", expanded: false, entries: [{ id: "act-doc-1-entry-1", name: "ЧЕКПОИНТОДИН А. А.", badge: "cc", product: "Паспорт гражданина РФ" }] },
+      { id: "act-doc-2", kind: "documents", status: "wait-spd", date: "22.07.2025", title: "Чек-поинт Батайск", expanded: false, entries: [{ id: "act-doc-2-entry-1", name: "ВЙЁЖНЧТА А. В.", badge: "dc", product: "Паспорт гражданина РФ" }] },
+      { id: "act-doc-3", kind: "documents", status: "wait-spd", date: "21.07.2025", title: "Чек-поинт Батайск", expanded: false, entries: [{ id: "act-doc-3-entry-1", name: "НИКИТИН О. И.", badge: "dc", product: "Паспорт гражданина РФ" }] }
+    ];
+
+    const completedItems = [
+      { id: "done-1", kind: "cards", status: "completed", date: "16.04.2026", title: "Чек-поинт Ухта", expanded: false, entries: [{ id: "done-1-entry-1", number: "8487", badge: "dc", product: "NH-PUL MIR AlfaCard Dual Daily" }] },
+      { id: "done-2", kind: "cards", status: "completed", date: "16.04.2026", title: "Чек-поинт Ухта", expanded: false, entries: [{ id: "done-2-entry-1", number: "6207", badge: "cc", product: "NH-PUL MIR AlfaCard Dual Daily" }] }
+    ];
+
+    const initialCardsInventory = [
+      { id: "card-stock-1", location: "ЛЦ Москва Алтуфьево", number: "7181", badge: "cc", product: "R7-MIR Classic Instant CR" },
+      { id: "card-stock-2", location: "ЛЦ Москва Алтуфьево", number: "5893", badge: "dc", product: "LG-PUL MIR Kids DB" },
+      { id: "card-stock-3", location: "ЛЦ Чек-поинт Ханты-Мансийск", number: "7028", badge: "dc", product: "NH-PUL MIR AlfaCard Dual Daily" },
+      { id: "card-stock-4", location: "ЛЦ Чек-поинт Ханты-Мансийск", number: "6140", badge: "cc", product: "R7-MIR Classic Instant CR" }
+    ];
+
+    const initialDocumentsInventory = [
+      { id: "doc-stock-1", location: "Чек-поинт Батайск", name: "ЧЕКПОИНТОДИН А. А.", badge: "cc", product: "Паспорт гражданина РФ" },
+      { id: "doc-stock-2", location: "Чек-поинт Батайск", name: "ВЙЁЖНЧТА А. В.", badge: "dc", product: "Паспорт гражданина РФ" },
+      { id: "doc-stock-3", location: "Чек-поинт Батайск", name: "ТЦФХЯЪЧЕ А. В.", badge: "dc", product: "Паспорт гражданина РФ" },
+      { id: "doc-stock-4", location: "Чек-поинт Батайск", name: "НИКИТИН О. И.", badge: "dc", product: "Паспорт гражданина РФ" },
+      { id: "doc-stock-5", location: "Чек-поинт Батайск", name: "Бордов И. В.", badge: "dc", product: "Паспорт гражданина РФ" },
+      { id: "doc-stock-6", location: "Чек-поинт Батайск", name: "ЬЩТГНЭОА А. В.", badge: "dc", product: "Паспорт гражданина РФ" },
+      { id: "doc-stock-7", location: "Чек-поинт Ухта", name: "ПАХОМОВ С. В.", badge: "cc", product: "Паспорт гражданина РФ" },
+      { id: "doc-stock-8", location: "Чек-поинт Ухта", name: "СОРОКИНА Е. А.", badge: "dc", product: "Паспорт гражданина РФ" }
+    ];
+
+    const MANUAL_CARDS_STORAGE_KEY = "demo-sfa-go-manual-cards";
+    const TODAY_ACT_DATE = "28.04.2026";
+    const allowedViews = new Set(["list", "completed", "scanner", "scanner-home"]);
+    const allowedTabs = new Set(["acts", "cards", "documents"]);
+
+    const phoneNode = document.getElementById("phone");
+    const sideMenu = document.getElementById("sideMenu");
+    const menuCloseBtn = document.getElementById("menuCloseBtn");
+    const overlay = document.getElementById("overlay");
+    const app = document.getElementById("app");
+
+    function cloneData(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    const state = {
+      view: "list",
+      activeTab: "acts",
+      menuOpen: false,
+      manualSheetOpen: false,
+      manualCardNumber: "",
+      cardQuery: "",
+      activeCardsLocation: "ЛЦ Москва Алтуфьево",
+      activeDocumentsLocation: "Чек-поинт Батайск",
+      selectedCardIds: [],
+      selectedDocumentIds: [],
+      acts: cloneData(initialActs),
+      cardsInventory: cloneData(initialCardsInventory),
+      documentsInventory: cloneData(initialDocumentsInventory),
+      actSeq: 100
+    };
+
+    function parseInitialState() {
+      const params = new URLSearchParams(window.location.search);
+      const nextView = params.get("view") || "list";
+      const nextTab = params.get("tab") || "acts";
+      state.view = allowedViews.has(nextView) ? nextView : "list";
+      state.activeTab = allowedTabs.has(nextTab) ? nextTab : "acts";
+    }
+
+    function syncUrl() {
+      const url = new URL(window.location.href);
+      if (state.view === "list") {
+        url.searchParams.delete("view");
+        url.searchParams.set("tab", state.activeTab);
+      } else {
+        url.searchParams.set("view", state.view);
+        url.searchParams.delete("tab");
+      }
+      window.history.replaceState({}, "", url.toString());
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function normalizeCardNumber(value) {
+      return String(value || "").replace(/\D/g, "").slice(0, 19);
+    }
+
+    function readManualCards() {
+      try {
+        const raw = window.localStorage.getItem(MANUAL_CARDS_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(parsed)) {
+          return [];
+        }
+        return parsed.map((item) => normalizeCardNumber(item)).filter(Boolean);
+      } catch {
+        return [];
+      }
+    }
+
+    function writeManualCards(cards) {
+      try {
+        window.localStorage.setItem(MANUAL_CARDS_STORAGE_KEY, JSON.stringify(cards));
+      } catch {
+        // Ignore storage issues in local demo mode.
+      }
+    }
+
+    function storeManualCard(number) {
+      const normalized = normalizeCardNumber(number);
+      if (!normalized) {
+        return;
+      }
+      const nextCards = readManualCards().filter((item) => item !== normalized);
+      nextCards.unshift(normalized);
+      writeManualCards(nextCards.slice(0, 12));
+    }
+
+    function statusMeta(status) {
+      const map = {
+        "wait-spd": { label: "Ожидает СПД", className: "badge-status-wait-spd" },
+        destroy: { label: "На уничтожение", className: "badge-status-destroy" },
+        shortage: { label: "Недостача", className: "badge-status-shortage" },
+        "wait-svk": { label: "Ожидает СВК", className: "badge-status-wait-svk" },
+        completed: { label: "Обработан СПД", className: "badge-status-completed" }
+      };
+      return map[status] || map["wait-spd"];
+    }
+
+    function kindMeta(kind) {
+      const map = {
+        cards: { label: "Карты", className: "badge-kind-cards" },
+        documents: { label: "Документы", className: "badge-kind-documents" }
+      };
+      return map[kind] || map.cards;
+    }
+
+    function typeBadgeMeta(type) {
+      const map = {
+        cc: { label: "CC", className: "mini-badge-cc" },
+        dc: { label: "DC", className: "mini-badge-dc" }
+      };
+      return map[type] || map.dc;
+    }
+
+    function nextActId(prefix) {
+      state.actSeq += 1;
+      return `${prefix}-${state.actSeq}`;
+    }
+
+    function renderCardsIcon() {
+      return `
+        <svg width="38" height="38" viewBox="0 0 38 38" fill="none" aria-hidden="true">
+          <path d="M6 12C6 9.8 7.8 8 10 8H24.5C26.7 8 28.5 9.8 28.5 12V17.5H11.5C9.6 17.5 8 19.1 8 21V29.5H10C10 31.4 11.6 33 13.5 33H27.5C29.4 33 31 31.4 31 29.5V18.5C31 16.6 29.4 15 27.5 15H28.5V12C28.5 9.8 26.7 8 24.5 8H10C7.8 8 6 9.8 6 12Z" fill="currentColor"/>
+          <path d="M8 21C8 19.1 9.6 17.5 11.5 17.5H27.5C29.4 17.5 31 19.1 31 21V29.5C31 31.4 29.4 33 27.5 33H13.5C11.6 33 10 31.4 10 29.5H8V21Z" fill="currentColor"/>
+          <path d="M14 23.5H26" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      `;
+    }
+
+    function renderDocumentsIcon() {
+      return `
+        <svg width="38" height="38" viewBox="0 0 38 38" fill="none" aria-hidden="true">
+          <path d="M10 4C10 2.9 10.9 2 12 2H22.5L30 9.5V32C30 33.1 29.1 34 28 34H12C10.9 34 10 33.1 10 32V4Z" fill="currentColor"/>
+          <path d="M22 2V10H30" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M14 16H25" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+          <path d="M14 22H25" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+          <path d="M14 28H21" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      `;
+    }
+
+    function renderInfoIcon() {
+      return `
+        <svg viewBox="0 0 18 18" fill="none" aria-hidden="true">
+          <circle cx="9" cy="9" r="7.15" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M9 7.2V12.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="9" cy="4.8" r="1" fill="currentColor"/>
+        </svg>
+      `;
+    }
+
+    function renderTypeBadge(type) {
+      const meta = typeBadgeMeta(type);
+      return `<span class="mini-badge ${meta.className}">${meta.label}</span>`;
+    }
+
+    function renderWorkBadge() {
+      return `<span class="mini-badge mini-badge-work">В работе</span>`;
+    }
+
+    function renderActEntry(entry, kind) {
+      if (kind === "documents") {
+        return `
+          <div class="act-entry-card">
+            <div class="act-entry-top">
+              <span class="act-entry-name">${escapeHtml(entry.name)}</span>
+              ${renderTypeBadge(entry.badge)}
+              ${renderWorkBadge()}
+            </div>
+            <p class="act-entry-copy">${escapeHtml(entry.product)}</p>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="act-entry-card">
+          <div class="act-entry-top">
+            <span class="act-entry-number">•• ${escapeHtml(entry.number)}</span>
+            ${renderTypeBadge(entry.badge)}
+          </div>
+          <p class="act-entry-copy">${escapeHtml(entry.product)}</p>
+        </div>
+      `;
+    }
+
+    function renderActCard(item, options = {}) {
+      const kind = kindMeta(item.kind);
+      const status = statusMeta(item.status);
+      const icon = item.kind === "documents" ? renderDocumentsIcon() : renderCardsIcon();
+      const kindWord = item.kind === "documents" ? "документы" : "карты";
+      const isExpanded = Boolean(item.expanded);
+      const canCancel = options.canCancel !== false;
+      return `
+        <article class="act-card">
+          <div class="badge-row">
+            <span class="badge ${kind.className}">${kind.label}</span>
+            <span class="badge ${status.className}">${status.label}</span>
+          </div>
+          <div class="item-row">
+            <div class="item-icon">${icon}</div>
+            <div>
+              <p class="item-title">${escapeHtml(item.date)}</p>
+              <p class="item-sub">${escapeHtml(item.title)} ${renderInfoIcon()}</p>
+            </div>
+          </div>
+          <div class="act-card-controls">
+            <button class="outline-btn" type="button" data-action="toggle-act" data-id="${escapeHtml(item.id)}">
+              ${isExpanded ? `Скрыть ${kindWord}` : `Показать ${kindWord}`}
+            </button>
+            ${isExpanded ? `
+              <div class="act-entry-list">
+                ${item.entries.map((entry) => renderActEntry(entry, item.kind)).join("")}
+              </div>
+              ${canCancel ? `<button class="soft-action-btn enabled" type="button" data-action="cancel-act" data-id="${escapeHtml(item.id)}">Отменить акт</button>` : ""}
+            ` : ""}
+          </div>
+        </article>
+      `;
+    }
+
+    function renderTabs() {
+      return `
+        <div class="tabs" role="tablist" aria-label="Разделы актов">
+          <button class="tab-btn ${state.activeTab === "acts" ? "active" : ""}" type="button" data-action="set-tab" data-tab="acts">Акты</button>
+          <button class="tab-btn ${state.activeTab === "cards" ? "active" : ""}" type="button" data-action="set-tab" data-tab="cards">Карты</button>
+          <button class="tab-btn ${state.activeTab === "documents" ? "active" : ""}" type="button" data-action="set-tab" data-tab="documents">Документы</button>
+        </div>
+      `;
+    }
+
+    function getCardsLocations() {
+      return ["ЛЦ Москва Алтуфьево", "ЛЦ Чек-поинт Ханты-Мансийск"];
+    }
+
+    function getDocumentLocations() {
+      return ["Чек-поинт Батайск", "Чек-поинт Ухта"];
+    }
+
+    function getFilteredCards() {
+      const query = state.cardQuery.trim();
+      return state.cardsInventory.filter((item) => {
+        if (item.location !== state.activeCardsLocation) {
+          return false;
+        }
+        if (!query) {
+          return true;
+        }
+        return item.number.includes(query);
+      });
+    }
+
+    function getFilteredDocuments() {
+      return state.documentsInventory.filter((item) => item.location === state.activeDocumentsLocation);
+    }
+
+    function areAllVisibleCardsSelected() {
+      const visibleIds = getFilteredCards().map((item) => item.id);
+      return visibleIds.length > 0 && visibleIds.every((id) => state.selectedCardIds.includes(id));
+    }
+
+    function areAllVisibleDocumentsSelected() {
+      const visibleIds = getFilteredDocuments().map((item) => item.id);
+      return visibleIds.length > 0 && visibleIds.every((id) => state.selectedDocumentIds.includes(id));
+    }
+
+    function renderCardInventoryItem(item) {
+      const checked = state.selectedCardIds.includes(item.id);
+      return `
+        <label class="inventory-item">
+          <span class="inventory-check">
+            <input type="checkbox" ${checked ? "checked" : ""} data-card-id="${escapeHtml(item.id)}">
+          </span>
+          <span>
+            <span class="inventory-head">
+              <span class="inventory-number">•• ${escapeHtml(item.number)}</span>
+              ${renderTypeBadge(item.badge)}
+              ${renderWorkBadge()}
+            </span>
+            <p class="inventory-sub">${escapeHtml(item.product)}</p>
+          </span>
+        </label>
+      `;
+    }
+
+    function renderDocumentInventoryItem(item) {
+      const checked = state.selectedDocumentIds.includes(item.id);
+      return `
+        <label class="inventory-item">
+          <span class="inventory-check">
+            <input type="checkbox" ${checked ? "checked" : ""} data-document-id="${escapeHtml(item.id)}">
+          </span>
+          <span>
+            <span class="inventory-name-row">
+              <span class="inventory-name">${escapeHtml(item.name)}</span>
+              <span class="inventory-info">${renderInfoIcon()}</span>
+            </span>
+            <span class="inventory-head">
+              ${renderTypeBadge(item.badge)}
+              ${renderWorkBadge()}
+            </span>
+            <p class="inventory-sub">${escapeHtml(item.product)}</p>
+          </span>
+        </label>
+      `;
+    }
+
+    function renderActsTab() {
+      return `
+        <button class="scan-trigger" type="button" data-action="open-scanner">
+          <svg viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <path d="M5 2.5H2.5V5M13 2.5H15.5V5M5 15.5H2.5V13M15.5 13V15.5H13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6.5 9H11.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <span>Отсканировать карту</span>
+        </button>
+        <div class="acts-stack">
+          ${state.acts.map((item) => renderActCard(item)).join("")}
+        </div>
+        <button class="completed-link" type="button" data-action="open-completed">Завершенные акты</button>
+      `;
+    }
+
+    function renderCardsTab() {
+      const cards = getFilteredCards();
+      const hasSelection = state.selectedCardIds.length > 0;
+      return `
+        <div class="chip-row">
+          ${getCardsLocations().map((location) => `
+            <button class="filter-chip ${state.activeCardsLocation === location ? "active" : ""}" type="button" data-action="set-cards-location" data-location="${escapeHtml(location)}">
+              ${escapeHtml(location)}
+            </button>
+          `).join("")}
+        </div>
+        <label class="search-field">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <circle cx="8" cy="8" r="5.2" stroke="currentColor" stroke-width="2"/>
+            <path d="M11.8 11.8L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input type="text" inputmode="numeric" placeholder="По номеру карты" value="${escapeHtml(state.cardQuery)}" data-cards-search>
+        </label>
+        <label class="select-row">
+          <input type="checkbox" ${areAllVisibleCardsSelected() ? "checked" : ""} data-cards-select-all>
+          <span>Выбрать все</span>
+        </label>
+        <div class="inventory-list">
+          ${cards.length ? cards.map(renderCardInventoryItem).join("") : '<div class="inventory-empty">Карты для выбранного чек-поинта закончились</div>'}
+        </div>
+        <div class="inventory-actions">
+          <button class="soft-action-btn ${hasSelection ? "enabled" : ""}" type="button" ${hasSelection ? "" : "disabled"} data-action="create-return-act">Создать акт на возврат</button>
+          <button class="soft-action-btn ${hasSelection ? "enabled" : ""}" type="button" ${hasSelection ? "" : "disabled"} data-action="create-destroy-act">Создать акт на уничтожение</button>
+        </div>
+      `;
+    }
+
+    function renderDocumentsTab() {
+      const documents = getFilteredDocuments();
+      const hasSelection = state.selectedDocumentIds.length > 0;
+      return `
+        <div class="chip-row">
+          ${getDocumentLocations().map((location) => `
+            <button class="filter-chip ${state.activeDocumentsLocation === location ? "active" : ""}" type="button" data-action="set-documents-location" data-location="${escapeHtml(location)}">
+              ${escapeHtml(location)}
+            </button>
+          `).join("")}
+        </div>
+        <label class="select-row">
+          <input type="checkbox" ${areAllVisibleDocumentsSelected() ? "checked" : ""} data-documents-select-all>
+          <span>Выбрать все</span>
+        </label>
+        <div class="inventory-list">
+          ${documents.length ? documents.map(renderDocumentInventoryItem).join("") : '<div class="inventory-empty">Документы для выбранного чек-поинта закончились</div>'}
+        </div>
+        <div class="inventory-actions">
+          <button class="soft-action-btn ${hasSelection ? "enabled" : ""}" type="button" ${hasSelection ? "" : "disabled"} data-action="create-document-act">Создать акт</button>
+        </div>
+      `;
+    }
+
+    function renderListView() {
+      let tabContent = renderActsTab();
+      if (state.activeTab === "cards") {
+        tabContent = renderCardsTab();
+      } else if (state.activeTab === "documents") {
+        tabContent = renderDocumentsTab();
+      }
+
+      return `
+        <div class="screen">
+          <div class="topbar">
+            <button class="icon-btn" type="button" data-action="open-menu" aria-label="Открыть меню">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M3.5 5H16.5M3.5 10H16.5M3.5 15H16.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          ${renderTabs()}
+          ${tabContent}
+        </div>
+      `;
+    }
+
+    function renderCompletedView() {
+      return `
+        <div class="screen">
+          <div class="header-row">
+            <button class="back-btn" type="button" data-action="back-to-list" aria-label="Назад в акты">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M11.8 4.5L6.3 10L11.8 15.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <h2>Завершенные акты</h2>
+          </div>
+          <h1 class="page-title">Завершенные акты</h1>
+          <p class="page-copy">Здесь хранятся акты, которые были завершены в течении последних 30 дней</p>
+          <div class="acts-stack">
+            ${completedItems.map((item) => renderActCard(item, { canCancel: false })).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderScannerView() {
+      return `
+        <div class="scanner-screen">
+          <div class="screen">
+            <button class="scanner-close" type="button" data-action="scanner-close" aria-label="Закрыть камеру">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <div class="scanner-stage"></div>
+            <div class="scanner-bottom">
+              <div class="scanner-actions">
+                <button class="scanner-icon-btn" type="button" data-action="open-manual-entry" aria-label="Ввести номер карты вручную">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                    <path d="M3 13.8L4.2 10.2L11.4 3L15 6.6L7.8 13.8L4.2 15L3 13.8Z" fill="currentColor"/>
+                  </svg>
+                </button>
+                <div class="scanner-center">
+                  <div class="scanner-mode" aria-hidden="true"></div>
+                  <button class="capture-btn" type="button" aria-label="Сделать снимок"></button>
+                </div>
+                <button class="scanner-icon-btn" type="button" aria-label="Следующий режим">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                    <path d="M7 4L11 9L7 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="scanner-home-indicator" aria-hidden="true"></div>
+            </div>
+            ${state.manualSheetOpen ? `
+              <div class="scanner-sheet" role="dialog" aria-modal="true" aria-label="Ввод номера карты">
+                <div class="scanner-sheet-handle" aria-hidden="true"></div>
+                <div class="scanner-sheet-head">
+                  <div>
+                    <h2>Введите номер карты</h2>
+                    <p>Ручной ввод, если сканирование карты недоступно</p>
+                  </div>
+                  <button class="scanner-sheet-close" type="button" data-action="close-manual-entry" aria-label="Закрыть ввод">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                      <path d="M5 5L13 13M13 5L5 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+                <input class="scanner-sheet-input" type="text" inputmode="numeric" placeholder="Номер карты" value="${escapeHtml(state.manualCardNumber)}" data-manual-card-input>
+                <button class="scanner-sheet-submit" type="button" data-action="submit-manual-entry" ${state.manualCardNumber ? "" : "disabled"}>Готово</button>
+              </div>
+            ` : ""}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderScannerHomeView() {
+      return `
+        <div class="screen scanner-home-screen">
+          <div class="scanner-home-head">
+            <h1>Выдача карты</h1>
+          </div>
+          <div></div>
+          <div class="scanner-home-actions">
+            <button class="primary-btn" type="button" data-action="open-scanner">Сканировать карту</button>
+            <button class="secondary-btn" type="button" data-action="back-to-list">Назад</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function syncOverlay() {
+      overlay.classList.toggle("open", state.menuOpen);
+    }
+
+    function openSideMenu() {
+      state.menuOpen = true;
+      sideMenu.classList.add("open");
+      sideMenu.setAttribute("aria-hidden", "false");
+      phoneNode.classList.add("menu-open");
+      syncOverlay();
+    }
+
+    function closeSideMenu() {
+      state.menuOpen = false;
+      sideMenu.classList.remove("open");
+      sideMenu.setAttribute("aria-hidden", "true");
+      phoneNode.classList.remove("menu-open");
+      syncOverlay();
+    }
+
+    function goToFlow(flow) {
+      closeSideMenu();
+      const targetPath = flow === "meetings" ? "../meetings/index.html" : "../acts/index.html";
+      const target = new URL(targetPath, window.location.href);
+      window.location.href = target.toString();
+    }
+
+    function setView(view) {
+      if (!allowedViews.has(view)) {
+        return;
+      }
+      closeSideMenu();
+      state.view = view;
+      if (view !== "scanner") {
+        state.manualSheetOpen = false;
+        state.manualCardNumber = "";
+      }
+      syncUrl();
+      renderApp();
+    }
+
+    function setTab(tab) {
+      if (!allowedTabs.has(tab)) {
+        return;
+      }
+      state.activeTab = tab;
+      syncUrl();
+      renderApp();
+    }
+
+    function toggleActExpanded(id) {
+      state.acts = state.acts.map((item) => item.id === id ? { ...item, expanded: !item.expanded } : item);
+      renderApp();
+    }
+
+    function cancelAct(id) {
+      state.acts = state.acts.filter((item) => item.id !== id);
+      renderApp();
+    }
+
+    function createCardActs(mode) {
+      const selected = state.cardsInventory.filter((item) => state.selectedCardIds.includes(item.id));
+      if (!selected.length) {
+        return;
+      }
+      const grouped = new Map();
+      selected.forEach((item) => {
+        if (!grouped.has(item.location)) {
+          grouped.set(item.location, []);
+        }
+        grouped.get(item.location).push(item);
+      });
+      const status = mode === "destroy" ? "destroy" : "wait-spd";
+      const nextActs = Array.from(grouped.entries()).map(([location, items]) => ({
+        id: nextActId("created-card-act"),
+        kind: "cards",
+        status,
+        date: TODAY_ACT_DATE,
+        title: location,
+        expanded: false,
+        entries: items.map((item) => ({
+          id: nextActId("created-card-entry"),
+          number: item.number,
+          badge: item.badge,
+          product: item.product
+        }))
+      }));
+      state.cardsInventory = state.cardsInventory.filter((item) => !state.selectedCardIds.includes(item.id));
+      state.selectedCardIds = [];
+      state.cardQuery = "";
+      state.activeTab = "acts";
+      state.acts = [...nextActs, ...state.acts];
+      syncUrl();
+      renderApp();
+    }
+
+    function createDocumentActs() {
+      const selected = state.documentsInventory.filter((item) => state.selectedDocumentIds.includes(item.id));
+      if (!selected.length) {
+        return;
+      }
+      const grouped = new Map();
+      selected.forEach((item) => {
+        if (!grouped.has(item.location)) {
+          grouped.set(item.location, []);
+        }
+        grouped.get(item.location).push(item);
+      });
+      const nextActs = Array.from(grouped.entries()).map(([location, items]) => ({
+        id: nextActId("created-doc-act"),
+        kind: "documents",
+        status: "wait-spd",
+        date: TODAY_ACT_DATE,
+        title: location,
+        expanded: false,
+        entries: items.map((item) => ({
+          id: nextActId("created-doc-entry"),
+          name: item.name,
+          badge: item.badge,
+          product: item.product
+        }))
+      }));
+      state.documentsInventory = state.documentsInventory.filter((item) => !state.selectedDocumentIds.includes(item.id));
+      state.selectedDocumentIds = [];
+      state.activeTab = "acts";
+      state.acts = [...nextActs, ...state.acts];
+      syncUrl();
+      renderApp();
+    }
+
+    function toggleCardSelection(id, checked) {
+      if (checked) {
+        if (!state.selectedCardIds.includes(id)) {
+          state.selectedCardIds = [...state.selectedCardIds, id];
+        }
+      } else {
+        state.selectedCardIds = state.selectedCardIds.filter((item) => item !== id);
+      }
+      renderApp();
+    }
+
+    function toggleDocumentSelection(id, checked) {
+      if (checked) {
+        if (!state.selectedDocumentIds.includes(id)) {
+          state.selectedDocumentIds = [...state.selectedDocumentIds, id];
+        }
+      } else {
+        state.selectedDocumentIds = state.selectedDocumentIds.filter((item) => item !== id);
+      }
+      renderApp();
+    }
+
+    function toggleAllVisibleCards(checked) {
+      const visibleIds = getFilteredCards().map((item) => item.id);
+      if (checked) {
+        state.selectedCardIds = Array.from(new Set([...state.selectedCardIds, ...visibleIds]));
+      } else {
+        state.selectedCardIds = state.selectedCardIds.filter((id) => !visibleIds.includes(id));
+      }
+      renderApp();
+    }
+
+    function toggleAllVisibleDocuments(checked) {
+      const visibleIds = getFilteredDocuments().map((item) => item.id);
+      if (checked) {
+        state.selectedDocumentIds = Array.from(new Set([...state.selectedDocumentIds, ...visibleIds]));
+      } else {
+        state.selectedDocumentIds = state.selectedDocumentIds.filter((id) => !visibleIds.includes(id));
+      }
+      renderApp();
+    }
+
+    function renderApp() {
+      if (state.view === "completed") {
+        app.innerHTML = renderCompletedView();
+      } else if (state.view === "scanner") {
+        app.innerHTML = renderScannerView();
+      } else if (state.view === "scanner-home") {
+        app.innerHTML = renderScannerHomeView();
+      } else {
+        app.innerHTML = renderListView();
+      }
+      bindAppActions();
+    }
+
+    function handleAppAction(action, button) {
+      if (action === "open-menu") {
+        openSideMenu();
+      } else if (action === "set-tab") {
+        setTab(button.dataset.tab || "acts");
+      } else if (action === "open-scanner") {
+        state.manualSheetOpen = false;
+        state.manualCardNumber = "";
+        setView("scanner");
+      } else if (action === "open-completed") {
+        setView("completed");
+      } else if (action === "back-to-list") {
+        setView("list");
+      } else if (action === "toggle-act") {
+        toggleActExpanded(button.dataset.id || "");
+      } else if (action === "cancel-act") {
+        cancelAct(button.dataset.id || "");
+      } else if (action === "set-cards-location") {
+        state.activeCardsLocation = button.dataset.location || state.activeCardsLocation;
+        renderApp();
+      } else if (action === "set-documents-location") {
+        state.activeDocumentsLocation = button.dataset.location || state.activeDocumentsLocation;
+        renderApp();
+      } else if (action === "create-return-act") {
+        createCardActs("return");
+      } else if (action === "create-destroy-act") {
+        createCardActs("destroy");
+      } else if (action === "create-document-act") {
+        createDocumentActs();
+      } else if (action === "open-manual-entry") {
+        state.manualSheetOpen = true;
+        renderApp();
+        const input = app.querySelector("[data-manual-card-input]");
+        if (input) {
+          input.focus();
+          input.setSelectionRange(input.value.length, input.value.length);
+        }
+      } else if (action === "close-manual-entry") {
+        state.manualSheetOpen = false;
+        state.manualCardNumber = "";
+        renderApp();
+      } else if (action === "submit-manual-entry") {
+        const normalized = normalizeCardNumber(state.manualCardNumber);
+        if (!normalized) {
+          return;
+        }
+        storeManualCard(normalized);
+        state.manualSheetOpen = false;
+        state.manualCardNumber = "";
+        renderApp();
+      } else if (action === "scanner-close") {
+        setView("scanner-home");
+      }
+    }
+
+    function bindActionButton(button) {
+      if (!button || button.dataset.actionBound === "true") {
+        return;
+      }
+      button.dataset.actionBound = "true";
+      button.addEventListener("click", () => {
+        const action = button.getAttribute("data-action");
+        if (action) {
+          handleAppAction(action, button);
+        }
+      });
+    }
+
+    function bindAppActions() {
+      app.querySelectorAll("[data-action]").forEach(bindActionButton);
+    }
+
+    app.addEventListener("input", (event) => {
+      const manualInput = event.target.closest("[data-manual-card-input]");
+      if (manualInput) {
+        const normalized = normalizeCardNumber(manualInput.value);
+        if (manualInput.value !== normalized) {
+          manualInput.value = normalized;
+        }
+        state.manualCardNumber = normalized;
+        const submitBtn = app.querySelector('[data-action="submit-manual-entry"]');
+        if (submitBtn) {
+          submitBtn.disabled = !normalized;
+        }
+        return;
+      }
+
+      const searchInput = event.target.closest("[data-cards-search]");
+      if (searchInput) {
+        state.cardQuery = searchInput.value.replace(/\D/g, "");
+        if (searchInput.value !== state.cardQuery) {
+          searchInput.value = state.cardQuery;
+        }
+        renderApp();
+      }
+    });
+
+    app.addEventListener("change", (event) => {
+      const cardCheckbox = event.target.closest("[data-card-id]");
+      if (cardCheckbox) {
+        toggleCardSelection(cardCheckbox.getAttribute("data-card-id") || "", cardCheckbox.checked);
+        return;
+      }
+
+      const documentCheckbox = event.target.closest("[data-document-id]");
+      if (documentCheckbox) {
+        toggleDocumentSelection(documentCheckbox.getAttribute("data-document-id") || "", documentCheckbox.checked);
+        return;
+      }
+
+      const cardsSelectAll = event.target.closest("[data-cards-select-all]");
+      if (cardsSelectAll) {
+        toggleAllVisibleCards(cardsSelectAll.checked);
+        return;
+      }
+
+      const documentsSelectAll = event.target.closest("[data-documents-select-all]");
+      if (documentsSelectAll) {
+        toggleAllVisibleDocuments(documentsSelectAll.checked);
+      }
+    });
+
+    menuCloseBtn.addEventListener("click", closeSideMenu);
+    overlay.addEventListener("click", closeSideMenu);
+
+    sideMenu.addEventListener("click", (event) => {
+      if (event.target === sideMenu) {
+        closeSideMenu();
+        return;
+      }
+
+      const button = event.target.closest("[data-menu-action]");
+      if (!button) {
+        return;
+      }
+
+      const action = button.getAttribute("data-menu-action");
+      if (action === "meetings") {
+        goToFlow("meetings");
+      } else if (action === "acts") {
+        closeSideMenu();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && state.menuOpen) {
+        closeSideMenu();
+      }
+    });
+
+    parseInitialState();
+    syncUrl();
+    renderApp();
+  </script>
+</body>
+</html>
