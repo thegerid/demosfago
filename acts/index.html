@@ -1072,6 +1072,7 @@
     ];
 
     const MANUAL_CARDS_STORAGE_KEY = "demo-sfa-go-manual-cards";
+    const DEMO_STATE_KEYS = ["demo-sfa-go-meetings-v1", MANUAL_CARDS_STORAGE_KEY];
     const TODAY_ACT_DATE = "28.04.2026";
     const allowedViews = new Set(["list", "completed", "scanner", "scanner-home"]);
     const allowedTabs = new Set(["acts", "cards", "documents"]);
@@ -1084,6 +1085,35 @@
 
     function cloneData(value) {
       return JSON.parse(JSON.stringify(value));
+    }
+
+    function getNavigationType() {
+      try {
+        const navigationEntries = typeof window.performance?.getEntriesByType === "function"
+          ? window.performance.getEntriesByType("navigation")
+          : [];
+        if (navigationEntries[0] && typeof navigationEntries[0].type === "string") {
+          return navigationEntries[0].type;
+        }
+      } catch {
+        // Ignore navigation timing issues in local demo mode.
+      }
+      try {
+        if (window.performance?.navigation?.type === 1) {
+          return "reload";
+        }
+      } catch {
+        // Ignore legacy navigation timing issues in local demo mode.
+      }
+      return "navigate";
+    }
+
+    if (getNavigationType() === "reload") {
+      try {
+        DEMO_STATE_KEYS.forEach((key) => window.sessionStorage.removeItem(key));
+      } catch {
+        // Ignore storage issues in local demo mode.
+      }
     }
 
     const state = {
@@ -1138,7 +1168,7 @@
 
     function readManualCards() {
       try {
-        const raw = window.localStorage.getItem(MANUAL_CARDS_STORAGE_KEY);
+        const raw = window.sessionStorage.getItem(MANUAL_CARDS_STORAGE_KEY);
         const parsed = raw ? JSON.parse(raw) : [];
         if (!Array.isArray(parsed)) {
           return [];
@@ -1151,7 +1181,7 @@
 
     function writeManualCards(cards) {
       try {
-        window.localStorage.setItem(MANUAL_CARDS_STORAGE_KEY, JSON.stringify(cards));
+        window.sessionStorage.setItem(MANUAL_CARDS_STORAGE_KEY, JSON.stringify(cards));
       } catch {
         // Ignore storage issues in local demo mode.
       }

@@ -6543,7 +6543,7 @@
 
     function readManualClientCards() {
       try {
-        const raw = window.localStorage.getItem(MANUAL_CARDS_STORAGE_KEY);
+        const raw = window.sessionStorage.getItem(MANUAL_CARDS_STORAGE_KEY);
         const parsed = raw ? JSON.parse(raw) : [];
         if (!Array.isArray(parsed)) {
           return [];

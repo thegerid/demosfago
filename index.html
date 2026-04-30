@@ -6,6 +6,14 @@
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <title>Demo SFA Go</title>
   <script>
+    const demoStateKeys = ["demo-sfa-go-meetings-v1", "demo-sfa-go-manual-cards"];
+    [window.localStorage, window.sessionStorage].forEach((storage) => {
+      try {
+        demoStateKeys.forEach((key) => storage.removeItem(key));
+      } catch {
+        // Ignore storage issues in local demo mode.
+      }
+    });
     const params = new URLSearchParams(location.search);
     const flow = (params.get("flow") || "meetings").trim();
     const targets = {
