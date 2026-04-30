@@ -182,9 +182,27 @@
       padding-right: 2px;
     }
 
-    .side-menu-body::-webkit-scrollbar {
+    .screen,
+    .side-menu-body,
+    .notifications-screen-content,
+    .client-data-scroll,
+    .client-cards-scroll,
+    .client-signing-scroll,
+    .client-result-list {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .screen::-webkit-scrollbar,
+    .side-menu-body::-webkit-scrollbar,
+    .notifications-screen-content::-webkit-scrollbar,
+    .client-data-scroll::-webkit-scrollbar,
+    .client-cards-scroll::-webkit-scrollbar,
+    .client-signing-scroll::-webkit-scrollbar,
+    .client-result-list::-webkit-scrollbar {
       width: 0;
       height: 0;
+      display: none;
     }
 
     .side-menu-card,

@@ -152,10 +152,19 @@
       -webkit-overflow-scrolling: touch;
     }
 
+    .screen,
+    .side-menu-body,
+    .chip-row {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .screen::-webkit-scrollbar,
     .side-menu-body::-webkit-scrollbar,
     .chip-row::-webkit-scrollbar {
       width: 0;
       height: 0;
+      display: none;
     }
 
     .side-menu-card,
