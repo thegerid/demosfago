@@ -1,12 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Delivery training">
-  <rect width="64" height="64" fill="#f53d21"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Alfa mark">
+  <rect width="64" height="64" fill="#fff"/>
   <path
-    d="M23 45 32 18l9 27M26.5 36h11"
+    d="M16 42 32 8 48 42M22 29h20"
     fill="none"
-    stroke="#fff"
+    stroke="#f5311f"
     stroke-linecap="round"
     stroke-linejoin="round"
-    stroke-width="6.5"
+    stroke-width="8.5"
   />
-  <rect x="21" y="50" width="22" height="5" rx="1" fill="#fff"/>
+  <path
+    d="M15 55h34"
+    fill="none"
+    stroke="#f5311f"
+    stroke-linecap="round"
+    stroke-width="7.5"
+  />
 </svg>
