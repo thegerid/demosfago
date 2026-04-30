@@ -1,10 +1,12 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Мои макеты">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0f766e"/>
-      <stop offset="1" stop-color="#1d4ed8"/>
-    </linearGradient>
-  </defs>
-  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#g)"/>
-  <path d="M16 44V20h5l11 12 11-12h5v24h-6V30l-10 10-10-10v14z" fill="#fff"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Delivery training">
+  <rect width="64" height="64" fill="#f53d21"/>
+  <path
+    d="M23 45 32 18l9 27M26.5 36h11"
+    fill="none"
+    stroke="#fff"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="6.5"
+  />
+  <rect x="21" y="50" width="22" height="5" rx="1" fill="#fff"/>
 </svg>
